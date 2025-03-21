@@ -1,0 +1,65 @@
+# 📌 Node.js dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 📌 Logs and cache
+logs/
+*.log
+*.pid
+*.seed
+*.cache
+*.out
+*.gz
+log/
+debug.log
+nohup.out
+
+# 📌 Environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+config.json
+
+# 📌 PostgreSQL
+*.pgsql
+*.pg_dump
+dump.sql
+
+# 📌 MongoDB
+*.bson
+*.mongodump
+
+# 📌 Prisma ORM
+prisma/migrations/
+prisma/dev.db
+prisma/schema.prisma
+prisma/.env
+prisma/.dburl
+
+# 📌 Redis
+dump.rdb
+*.aof
+
+# 📌 Docker
+docker-compose.override.yml
+.dockerignore
+
+# 📌 Build files
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# 📌 TypeScript
+*.d.ts
+*.js.map
+
+# 📌 IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
