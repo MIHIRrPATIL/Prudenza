@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String        @id @default(uuid())
+  clerkUserId  String        @unique // clerk user id
+  email        String        @unique
+  name         String?
+  imageUrl     String?
+  transactions Transaction[]
+  accounts     Account[]
+  budgets      Budget[]
+  splits       Split[] // Relation to splits
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("users")
+}
+
+model Account {
+  id               String        @id @default(uuid())
+  name             String
+  type             AccountType
+  balance          Decimal       @default(0) // will ask initial balance while creating an account
+  isDefault        Boolean       @default(false)
+  userId           String
+  user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions     Transaction[]
+  fromTransactions Transaction[] @relation("FromAccount") // Relation for transactions where this account is the source
+  toTransactions   Transaction[] @relation("ToAccount") // Relation for transactions where this account is the destination
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([userId])
+  @@map("accounts")
+}
+
+model Transaction {
+  id                String             @id @default(uuid())
+  type              TransactionType
+  amount            Decimal
+  description       String?
+  date              DateTime
+  category          String
+  receiptUrl        String?
+  isRecurring       Boolean            @default(false)
+  recurringInterval RecurringInterval? // Only used if isRecurring is true
+  nextRecurringDate DateTime? // Next date for recurring transaction
+  lastProcessed     DateTime? // Last time this recurring transaction was processed
+  status            TransactionStatus  @default(COMPLETED)
+  userId            String
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountId         String
+  account           Account            @relation(fields: [accountId], references: [id], onDelete: Cascade)
+  fromAccountId     String? // For transfers: source account
+  toAccountId       String? // For transfers: destination account
+  fromAccount       Account?           @relation("FromAccount", fields: [fromAccountId], references: [id])
+  toAccount         Account?           @relation("ToAccount", fields: [toAccountId], references: [id])
+  splits            Split[] // Relation to splits
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([userId])
+  @@index([accountId])
+  @@map("transactions")
+}
+
+model Split {
+  id            String      @id @default(uuid())
+  transactionId String // Reference to the transaction being split
+  transaction   Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  userId        String // Reference to the user involved in the split
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  splitType     SplitType // Type of split (percentage, fixed, equal, weighted)
+  percentage    Float? // Percentage of the total amount (optional)
+  fixedAmount   Decimal? // Fixed amount to be shared (optional)
+  weight        Float? // Weight for weighted splits (optional)
+  parts         Int? // Number of equal parts (optional)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@index([transactionId])
+  @@index([userId])
+  @@map("splits")
+}
+
+model Budget {
+  id            String    @id @default(uuid())
+  amount        Decimal
+  lastAlertSent DateTime? // Track when the last alert was sent
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("budgets")
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER // Added for account-to-account transfers
+}
+
+enum AccountType {
+  CURRENT
+  SAVINGS
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+}
+
+enum RecurringInterval {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum SplitType {
+  PERCENTAGE // Split by percentage
+  FIXED // Split by fixed amount
+  EQUAL // Split equally among users
+  WEIGHTED // Split based on weights
+}
