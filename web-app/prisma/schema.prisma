@@ -31,6 +31,7 @@ model Account {
   balance          Decimal       @default(0) // will ask initial balance while creating an account
   isDefault        Boolean       @default(false)
   userId           String
+  details          String? // Additional details about the account
   user             User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions     Transaction[]
   fromTransactions Transaction[] @relation("FromAccount") // Relation for transactions where this account is the source
